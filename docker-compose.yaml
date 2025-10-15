@@ -1,0 +1,45 @@
+services:
+    namenode:
+        image: apache/hadoop:3
+        hostname: namenode
+        container_name: namenode
+        command: ["hdfs", "namenode"]
+        ports:
+            - 9870:9870 #Web ui
+            - 8020:8020 #RPC
+        env_file:
+            - ./config
+        environment:
+            ENSURE_NAMENODE_DIR: "/tmp/hadoop-root/dfs/name"
+    datanode:
+        image: apache/hadoop:3
+        command: ["hdfs", "datanode"]
+        env_file:
+            - ./config
+        depends_on:
+            - namenode
+    resourcemanager:
+        image: apache/hadoop:3
+        command: ["yarn", "resourcemanager"]
+        ports:
+            - 8088:8088
+        env_file:
+            - ./config
+        volumes:
+            - ./test.sh:/opt/test.sh
+        depends_on:
+            - namenode
+            - datanode
+    nodemanager:
+        image: apache/hadoop:3
+        command: ["yarn", "nodemanager"]
+        env_file:
+            - ./config
+        depends_on:
+            - resourcemanager
+    client:
+        image: python:3.11
+        command: tail -f /dev/null
+        volumes:
+            - ./:/app
+        working_dir: /app

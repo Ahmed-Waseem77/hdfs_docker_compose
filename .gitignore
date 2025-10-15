@@ -1,0 +1,6 @@
+.zed/
+.vscode/
+.idea/
+venv/
+test.txt
+target/
