@@ -11,13 +11,26 @@ services:
             - ./config
         environment:
             ENSURE_NAMENODE_DIR: "/tmp/hadoop-root/dfs/name"
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "bash",
+                    "-c",
+                    "curl -f http://localhost:9870/ || exit 1",
+                ]
+            interval: 15s
+            timeout: 10s
+            retries: 5
+            start_period: 40s
     datanode:
         image: apache/hadoop:3
         command: ["hdfs", "datanode"]
         env_file:
             - ./config
         depends_on:
-            - namenode
+            namenode:
+                condition: service_healthy
     resourcemanager:
         image: apache/hadoop:3
         command: ["yarn", "resourcemanager"]
@@ -27,16 +40,56 @@ services:
             - ./config
         volumes:
             - ./test.sh:/opt/test.sh
+        healthcheck:
+            test: ["CMD", "bash", "-c", "pgrep -f resourcemanager || exit 1"]
+            interval: 20s
+            timeout: 10s
+            retries: 10
+            start_period: 90s
         depends_on:
-            - namenode
-            - datanode
+            namenode:
+                condition: service_healthy
     nodemanager:
         image: apache/hadoop:3
         command: ["yarn", "nodemanager"]
         env_file:
             - ./config
         depends_on:
-            - resourcemanager
+            resourcemanager:
+                condition: service_healthy
+    jobhistoryserver:
+        image: apache/hadoop:3
+        hostname: jobhistoryserver
+        command:
+            - /bin/bash
+            - -c
+            - |
+                # Wait for HDFS to be ready
+                hdfs dfs -test -d / 2>/dev/null
+                while [ $? -ne 0 ]; do
+                    echo "Waiting for HDFS to be ready..."
+                    sleep 5
+                    hdfs dfs -test -d / 2>/dev/null
+                done
+
+                # Create directories in HDFS
+                echo "Creating JobHistory directories in HDFS..."
+                hdfs dfs -mkdir -p /history/tmp
+                hdfs dfs -mkdir -p /history/done
+                hdfs dfs -chmod -R 1777 /history
+
+                echo "Starting JobHistory Server..."
+                mapred historyserver
+        ports:
+            - 10020:10020 #RPC
+            - 19888:19888 #webapp
+        env_file:
+            - ./config
+        depends_on:
+            resourcemanager:
+                condition: service_healthy
+            namenode:
+                condition: service_healthy
     client:
         image: python:3.11
         command: tail -f /dev/null
