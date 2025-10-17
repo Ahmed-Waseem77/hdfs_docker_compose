@@ -3,6 +3,15 @@
 Minmial Set of Configurations for a HDFS playground.
 Comes with some JAVA-Python hdfs clients
 
+## Ports
+
+| Server | RPC/IPC Port | Webapp |
+| ---    | ---          | ---    | 
+| `jobhistoryserver` | `10020` | `19888` |
+| `resourcemanager` | - | `8088` |
+| `namenode` | `8020` | `9870` |
+
+
 ## Setup and Running Instructions
 
 1.  **Clone the repository** (if you haven't already):
@@ -52,18 +61,44 @@ docker-compose up --scale datanode=3 -d
 This will start 3 instances of the datanode service.
 
 >[!note]
+> The default replication factors on the datanodes is `3`
 > To change HDFS setup you can visit the `config` file and change it as you wish.
 
 ### Running Java Client
 
 To run the Java Client you need to install dependencies with maven:
-```
+```bash
 mvn clean package
 ```
 
 Then, you can run the compiled Java class:
-```
+```bash
 java -jar target/<jar-name>.jar
+```
+
+### Running a Java Mapreduce Job
+
+Enter the project directory of a certain job e.g `wordCountjob`
+1. Compile The Java main class with maven:
+```bash
+mvn clean package
+```
+
+2. Copy the `jar` to the namenode server (perferably int he ${HADOOP_HOME} Directory:
+```bash
+docker-compose cp ./target/<jar-name>.jar namenode:/opt/hadoop/
+```
+
+3. Run the `jar` from docker compose:
+```bash
+docker-compose exec -u hadoop namenode hadoop jar <jar-name>.jar <arg1> <arg2> ...
+```
+
+Or alternatively launch an interactive shell in the namenode server and run the docker:
+```bash
+docker-compose exec -u hadoop -it namenode bash
+# Now in namenode server shell
+hadoop jar <jar-name>.jar <arg1> <arg2> ...
 ```
 
 ### Running Python Client
