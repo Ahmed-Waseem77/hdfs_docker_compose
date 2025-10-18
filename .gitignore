@@ -7,3 +7,4 @@ target/
 tags
 test.sh/
 web_logs.txt
+transactions.csv

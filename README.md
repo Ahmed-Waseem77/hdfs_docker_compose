@@ -112,3 +112,39 @@ To run the Python client, you can execute the `HDFSClient.py` script inside the 
 docker-compose exec client pip install hdfs
 docker-compose exec client python ./hdfs_client_py/HDFSClient.py
 ```
+
+### Running a Python Job
+
+
+>[!important] 
+> > As per [this thread](https://serverfault.com/questions/1161816/mirrorlist-centos-org-no-longer-resolve)
+> 
+> CentOS is EOL as of july 2024, so most mirrorlists do not exist anymore,
+> as a workaround you can update the repo files in `/etc/yum.repos.d/` **Inside the namenode server**
+> After doing `docker-compose exec -u hadoop -it namenode bash`:
+> ```bash
+> sed -i 's/mirror\.centos\.org/vault.centos.org/g' /etc/yum.repos.d/CentOS-*.repo
+> sed -i 's/^#.*baseurl=http/baseurl=http/g' /etc/yum.repos.d/CentOS-*.repo
+> sed -i 's/^mirrorlist=http/#mirrorlist=http/g' /etc/yum.repos.d/CentOS-*.repo
+> ```
+>
+> This updates mirrorlist to use a baseurl instead of the ip addresses of the servers.
+> all in all if we keep using `vault.centos.org` for centos packages we will just keep downloading outdated packages with CVEs in them, so it is probably better to migrate.
+
+You can then install python3 with:
+```
+yum install python3
+```
+
+Once python is installed you can copy your scripts, to the namenode server:
+
+```bash
+docker-compose cp <your-script>.py namenode:/opt/hadoop/
+```
+
+and execute it:
+```
+python3 <your-script>.py
+```
+
+
