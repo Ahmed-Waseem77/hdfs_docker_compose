@@ -1,0 +1,7 @@
+[webtatic] 
+name=Webtatic repo
+baseurl=http://repo.webtatic.com/yum/centos/5/SRPMS/
+enabled=1 
+gpgcheck=1 
+gpgkey=http://repo.webtatic.com/yum/RPM-GPG-KEY-webtatic-andy
+
