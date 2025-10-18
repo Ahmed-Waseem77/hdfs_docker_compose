@@ -130,13 +130,17 @@ docker-compose exec client python ./hdfs_client_py/HDFSClient.py
 >
 > This updates mirrorlist to use a baseurl instead of the ip addresses of the servers.
 > all in all if we keep using `vault.centos.org` for centos packages we will just keep downloading outdated packages with CVEs in them, so it is probably better to migrate.
+>
+> **you need to replicate the steps above for the nodemanager servers too**\
+> To log in to an interactive shell in the nodemanager do `docker-compose exec -u hadoop -it lab1-nodemanager1 bash`\
+> If the nodemanager name doesnt match you can alway sdo `docker ps` to see its name, and if it is running
 
-You can then install python3 with:
+You can then install `python3` on **both** the namenode and the nodemanager with:
 ```
 yum install python3
 ```
 
-Once python is installed you can copy your scripts, to the namenode server:
+Once python is installed you can copy your scripts, to the **namenode** server:
 
 ```bash
 docker-compose cp <your-script>.py namenode:/opt/hadoop/
@@ -146,5 +150,16 @@ and execute it:
 ```
 python3 <your-script>.py
 ```
+
+To execute it on the hadoop cluster you can do:
+```bash
+hadoop jar ./share/hadoop/tools/lib/hadoop-streaming-3.3.6.jar \
+ -files <your-scirpt>.py,<your-script>.py \
+ -mapper "python3 <your-script>.py" \
+ -reducer "python3 <your-script>.py" \
+ -input <hdfs-input-file-path> \
+ -output <hdfs-output-file-path>
+```
+
 
 
